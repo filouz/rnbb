@@ -1,0 +1,75 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+
+
+enum RequestType {
+    START = 0;
+    STOP = 1;
+    CANCEL = 2;
+}
+
+enum RequestCase {
+    D2D6 = 0;
+    FLIP = 1;
+    MINT = 2;
+}
+
+message RnRequest {
+    RequestType type = 1;
+    RequestCase case = 2;
+
+    int64 stopLimit = 3;
+    
+}
+
+message Transaction {
+    string hash = 1;
+    int64 timestamp = 2;
+}
+
+message Demo2D6 {
+    int64 number1 = 1;
+    int64 number2 = 2;
+
+    RnDetails details = 3;
+}
+
+message DemoFlip {
+    bool head = 1;
+
+    RnDetails details = 3;
+}
+
+message RnDetails {
+    RequestCase type = 2;
+    int64 startTimestamp = 5;
+    int64 stopTimestamp = 6;
+    int64 elapsedTime = 7;
+    int64 txSize = 8;
+    repeated Transaction txs = 9;
+    string txsHash = 10;
+    int64 seed = 11;
+}
+
+message TxSize {
+    int64 length = 1;
+}
+
+message Ack {
+    RequestType reqAck = 1;
+}
+
+message Packet {
+    oneof response {
+        RnDetails rnDetails = 1;
+        Demo2D6 demo2d6 = 2;
+        DemoFlip demoFlip = 6;
+        Ack ack = 3;
+        TxSize size = 5;
+    }
+
+    oneof request {
+        RnRequest startNstop = 4;
+    }
+}

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exporter-deployment
+spec:
+  selector:
+    matchLabels:
+      app: exporter
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: exporter
+    spec:
+      containers:
+      - name: exporter
+        image: ghcr.io/filouz/rnbb/exporter:local
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 45555
+        env:
+        - name: ZMQ_EP
+          value: "tcp://bitcoin-service:15555"
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exporter-service
+spec:
+  selector:
+    app: exporter
+  ports:
+    - protocol: TCP
+      port: 45555
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exporter-ingress
+spec:
+  rules:
+  - host: "rnbb.dev.example.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/exporter"
+        backend:
+          service:
+            name: exporter-service
+            port:
+              number: 45555

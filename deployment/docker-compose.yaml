@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  bitcoin:
+    image: ${REGISTRY}/rnbb/bitcoin:${TAG}
+    container_name: bitcoin
+    volumes:
+      - "${BITCOIN_DIR}/data:/bitcoin/data"
+    working_dir: /bitcoin
+    networks:
+      - rnbb
+    restart: always
+
+  exporter:
+    image: ${REGISTRY}/rnbb/exporter:${TAG}
+    container_name: exporter
+    environment:
+      - ZMQ_EP=tcp://bitcoin:15555
+    ports:
+      - "25555:45555"
+    networks:
+      - rnbb
+    restart: always
+
+  rnbb-demo:
+    image: ${REGISTRY}/rnbb/demo:${TAG}
+    container_name: rnbb-demo
+    ports:
+      - "35555:8080"
+    environment:
+      - REACT_APP_EXPORTER_EP=${EXPORTER_EP}
+    networks:
+      - rnbb
+    restart: always
+
+networks:
+  rnbb:

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bitcoin-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  hostPath:
+    path: /mnt/HC_Volume_34116156/rnbb
+    type: DirectoryOrCreate
+
+---  
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bitcoin-pvc
+spec:
+  volumeName: bitcoin-pv
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
+
+      
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitcoin-deployment
+spec:
+  selector:
+    matchLabels:
+      app: bitcoin
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bitcoin
+    spec:
+      containers:
+      - name: bitcoin
+        image: ghcr.io/filouz/rnbb/bitcoin:local
+        ports:
+        - containerPort: 15555
+        volumeMounts:
+        - name: bitcoin-storage
+          mountPath: /bitcoin/data
+          subPath: bitcoin
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+        - name: bitcoin-storage
+          persistentVolumeClaim:
+            claimName: bitcoin-pvc
+      nodeSelector:
+        kubernetes.io/hostname: lab-in-example
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitcoin-service
+spec:
+  selector:
+    app: bitcoin
+  ports:
+    - protocol: TCP
+      port: 15555
